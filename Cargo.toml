@@ -1,0 +1,18 @@
+[package]
+name = "alistapi"
+version = "0.1.0"
+edition = "2021"
+authors = ["atopx <3940422@qq.com>"]
+description = "alist api sdk"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = { version = "0.10", default-features = false }
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.6", features = ["codec"] }
+reqwest = {version = "0.11", features = [
+    "json",
+    "stream",
+]}
