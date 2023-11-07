@@ -10,6 +10,7 @@ pub async fn mkdir(server: &str, token: &str, path: &str) -> Result<(), String> 
     let url = format!("{}/api/fs/mkdir", server);
     let resp: Response<NullResponse> = reqwest::Client::new()
         .post(url)
+        .header("Connection", "keep-alive")
         .header("Authorization", token)
         .header("Content-Type", "application/json")
         .json(&json!({"path": path}))
@@ -47,22 +48,36 @@ pub async fn rename(server: &str, token: &str, path: &str, name: &str) -> Result
     Ok(())
 }
 
-/// 表单上传文件 PUT /api/fs/form
-pub async fn form_upload(server: &str, token: &str, file: &str, size: u64) -> Result<(), String> {
-    let url = format!("{}/api/fs/rename", server);
-    let file = match File::open(file).await {
+pub struct UploadParams {
+    // 本地文件
+    pub local_file: String,
+    // 上传的路径
+    pub remote_path: String,
+    // 上传的名称
+    pub remote_name: String,
+}
+
+/// 流式上传文件 PUT /api/fs/put
+pub async fn upload(server: &str, token: &str, params: UploadParams) -> Result<(), String> {
+    let url = format!("{}/api/fs/put", server);
+    let file = match File::open(params.local_file).await {
         Ok(file) => file,
         Err(err) => {
             return Err(err.to_string());
         }
     };
+    let filesize = file.metadata().await.unwrap().len();
     let stream = FramedRead::new(file, BytesCodec::new());
     let file_body = Body::wrap_stream(stream);
     let resp: Response<NullResponse> = reqwest::Client::new()
         .put(url)
         .header("Authorization", token)
-        .header("Content-Type", "multipart/form-data")
-        .header("Content-Length", size)
+        .header(
+            "File-Path",
+            format!("{}/{}", params.remote_path, params.remote_name),
+        )
+        .header("Content-Length", filesize)
+        .header("Connection", "keep-alive")
         .body(file_body)
         .send()
         .await
@@ -485,10 +500,6 @@ pub async fn remove_empty_directory(
     if resp.code != 200 {
         return Err(resp.message);
     }
-    Ok(())
-}
-/// 流式上传文件 PUT /api/fs/put
-pub async fn put_upload() -> Result<(), String> {
     Ok(())
 }
 
