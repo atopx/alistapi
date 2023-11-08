@@ -24,8 +24,24 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn test_get_user_info() {
+        let token = auth::login(SERVER, USERNAME, PASSWORD).await.unwrap();
+        println!("{token}");
+        match auth::get_user_info(SERVER, &token).await {
+            Ok(user) => {
+                println!("{:?}", user);
+                assert!(true);
+            }
+            Err(e) => {
+                println!("{e}");
+                assert!(false);
+            }
+        }
+    }
+
+    #[tokio::test]
     async fn test_mkdir() {
-        let token = auth::auth(SERVER, USERNAME, PASSWORD).await.unwrap();
+        let token = auth::login(SERVER, USERNAME, PASSWORD).await.unwrap();
         match fs::mkdir(SERVER, &token, "/cloud/test_mkdir").await {
             Ok(()) => assert!(true),
             Err(e) => {
@@ -37,7 +53,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_rename() {
-        let token = auth::auth(SERVER, USERNAME, PASSWORD).await.unwrap();
+        let token = auth::login(SERVER, USERNAME, PASSWORD).await.unwrap();
         match fs::rename(SERVER, &token, "/cloud/test_mkdir", "test_rename").await {
             Ok(()) => assert!(true),
             Err(e) => {
@@ -49,7 +65,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_upload() {
-        let token = auth::auth(SERVER, USERNAME, PASSWORD).await.unwrap();
+        let token = auth::login(SERVER, USERNAME, PASSWORD).await.unwrap();
         match fs::upload(
             SERVER,
             &token,
@@ -71,7 +87,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_listdir() {
-        let token = auth::auth(SERVER, USERNAME, PASSWORD).await.unwrap();
+        let token = auth::login(SERVER, USERNAME, PASSWORD).await.unwrap();
         let mut params = fs::FileParams::default();
         params.path = Some("/cloud/test_rename".to_string());
         match fs::listdir(SERVER, &token, params).await {
